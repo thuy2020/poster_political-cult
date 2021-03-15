@@ -1,0 +1,292 @@
+---
+title: "The Making of a Transnational Political Cult  - An Affection Analysis of “A Little Newspaper That Could”"
+author: "Thuy Nguyen"
+institute: "University of Oregon"
+date: "2021-Feb-28"
+references:
+  - id: R-base
+    author:
+    - family: "Wilkerson"
+      given: "John"
+    title: 'Large-Scale Computerized Text Analysis in Political Science: Opportunities and Challenges'
+    issued:
+      year: 2017
+    URL: 
+output:
+  pagedown::poster_jacobs:
+    self_contained: false
+    pandoc_args: --mathjax
+---
+```{css echo = FALSE}
+body {
+    display: grid;
+    grid-template-areas:
+        'S1 S1 S1 S1'
+        'S2 S4 S5 S9'
+        'S2 S4 S5 S9'
+        'S2 S4 S5 S9'
+        'S2 S6 S6 S9'
+        'S3 S7 S8 S10'
+        'S3 S7 S8 S11'
+        'S3 S7 S8 S11'
+        'S3 S7 S8 S11'
+        'S3 S7 S8 S12';
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+}
+
+.poster-title h1 {
+  color: darkgreen;
+}
+```
+
+Object of study {.block data-color=white data-border-color=darkgreen data-background-color=white}
+================================================================================
+
+**Object:**
+
+The Epoch Times newspaper, English and Vietnamese editions. A newspaper that made an unexpected rise from a “near irrelevant” to a notable one that could generate a loyal readership in the US and Vietnam. 
+
+**Why does it matter?** 
+
+An analysis of a variant in the making of a trans-national political cult – a phenomenon that has been overlooked in the literature.
+
+
+
+Introduction {data-color=darkgreen}
+================================================================================
+
+This paper aims to analyse sentiments in political articles. It explores the prevalance of eight basic emotions in the Plutchik “emotion wheel”: fear, anger, trust, sadness, disgust, anticipation, joy, and surprise. For example, political cult is believed to be generally paved by **fear** and **anger**. Later analyses will test this hypothesis. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(tidytext)
+library(tm)
+library(textdata)
+```
+
+```{r data, message=FALSE, echo=FALSE, include=FALSE}
+sample_4to5 <- readRDS("articles_features_english_4001to5000.RDS")
+sample_3to4 <- readRDS("articles_features_english_3501to4000.RDS")
+sample_analysis <- bind_rows(sample_3to4, sample_4to5)
+
+# adding to stop_words
+test_stopwords <- tribble(
+  ~ word, ~ lexicon, 
+  "president", "TEST",
+  "politics", "TEST",
+  "state", "TEST", 
+  "it's", "TEST", 
+  "that's", "TEST", 
+  "news", "TEST", 
+  "election", "TEST", 
+  "they're", "TEST",
+  "we've", "TEST", 
+  "people", "TEST",
+  "don't", "TEST", 
+  "they’re", "TEST", 
+  "there's", "TEST",
+  "you're", "TEST"
+)
+
+my_stopwords <- stop_words %>% 
+  bind_rows(test_stopwords)
+
+counts <- sample_analysis %>% 
+  select(article_id, content) %>% 
+  unnest_tokens(word, content) %>% 
+  anti_join(my_stopwords) %>% 
+  count(article_id, word)
+
+# counts %>% 
+#   filter(n > 5) %>% # only terms occur more than 3 times in each doc
+#   mutate(word = reorder_within(word, n, article_id)) %>% 
+#   ggplot(aes(n, word)) +
+#   geom_col() +
+#   facet_wrap(~article_id,
+#              scales = "free_y") +
+#   scale_y_reordered() +
+#   ggtitle("Words occur more than 3 times in each document")
+
+```
+
+```{r emotion plots, fig.width=6, fig.height=9, dev='svg', out.width='100%', echo = FALSE}
+# join the data with the nrc dictionary 
+article_sentiment <- counts %>% 
+  inner_join(get_sentiments("nrc")) %>% 
+  filter(sentiment %in% c("anger", "fear", "sadness", "disgust", "anticipation", "joy")) %>% 
+  count(word, sentiment) %>% 
+  group_by(sentiment) %>% 
+  top_n(10, n) %>% 
+  ungroup() %>% 
+  mutate(word = fct_reorder(as.factor(word), n))
+  
+ggplot(article_sentiment, aes(word, n, fill = sentiment)) +
+  geom_col(fill = "cornflowerblue") +
+  facet_wrap(~sentiment, scale = "free") +
+  coord_flip() +
+  labs(
+    title = "Words associated with sentiments",
+    y = "Count of words",
+    x = "",
+    caption = "A demonstration of sentiments in a sample set of 1500 articles (from Oct-15 to Nov-24, 2020)"
+  ) +
+  scale_y_continuous(breaks = c(0, 1000, 2000)) +
+  theme(
+    legend.position = "none", 
+    panel.background = element_rect(fill = "white", colour = "grey50")
+ ) 
+
+```
+
+
+Research questions {data-color=darkgreen}
+================================================================================
+
+1. How did a minor newspaper like the Epoch Times become a popular one by generating a trans-national political cult of Trump? 
+
+2.	What was the image of Trump that the Epoch Times created? What kind of specific traits did the news articles associate Trump with? Are these traits comparable to those that the extant literature on political cult has pointed out? 
+
+3.	How did the Epoch Times weaponize affective news? How were the emotional flows infused in their articles? How did the readers respond to these articles in the comment sections? 
+
+
+
+
+Methods {data-color=darkgreen}
+================================================================================
+
+Comparative sentiment analysis of text data.
+
+- Using __NRC lexicon__ dictionary to capture different shades of emotion 
+
+- Applying __Lexicoder Sentiment Dictionary__, a “broad lexicon scored for positive and negative tone and tailored primarily to political texts” 
+
+
+Contribution goal {.block data-color=white data-border-color=darkgreen data-background-color=white}
+================================================================================
+
+-	An analysis of a **new variant** of political cult – a construction of leader cult that goes across national boundaries by a non-state actor.
+
+-	An illustration of the **co-production** of media affection between media producers and audience 
+
+
+
+Preliminary analysis (1) {data-color=darkgreen}
+================================================================================
+
+Comparision of overall sentiment in the articles published in the Election day, November 3, and the day the election result was called by the media, November 7. Negative affection is more intense in the latter. 
+  
+```{r overall sentiment plots, message=FALSE, fig.width=6, fig.height=9, dev='svg', out.width='100%', echo = FALSE}
+
+# subset of articles on Election day 
+election_day <- sample_analysis %>% 
+  filter(publish_date == "2020-11-03") %>% 
+  select(article_id, content) %>% 
+  unnest_tokens(word, content) %>% 
+  anti_join(my_stopwords) %>% 
+  count(article_id, word)
+
+# overall sentiment on Election day 
+  election_day_plot <- election_day %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(article_id, sentiment) %>% 
+  spread(sentiment, n) %>% 
+  mutate(common_sentiment = positive - negative) %>% 
+  mutate(article_id = as.numeric(article_id)) %>% 
+ggplot(aes(article_id, common_sentiment)) +
+         geom_col(aes(fill = common_sentiment), show.legend = FALSE) +
+         coord_flip() +
+         labs(
+           title = "Overall Sentiment on Election Day", 
+           x = "", 
+           y = "", 
+           legend = none) +
+  theme_minimal()
+  
+# overall sentiment on Nov. 7 when AP called the race
+
+called_day <- sample_analysis %>% 
+  filter(publish_date == "2020-11-07") %>% 
+  select(article_id, content) %>% 
+  unnest_tokens(word, content) %>% 
+  anti_join(my_stopwords) %>% 
+  count(article_id, word)
+
+called_day_plot <- called_day %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(article_id, sentiment) %>% 
+  spread(sentiment, n) %>% 
+  mutate(common_sentiment = positive - negative) %>% 
+  mutate(article_id = as.numeric(article_id)) %>% 
+ggplot(aes(article_id, common_sentiment)) +
+         geom_col(aes(fill = common_sentiment), show.legend = FALSE) +
+         coord_flip() +
+         labs(
+           title = "Overall Sentiment on the day the Media called Election Result", 
+           x = "Articles", 
+           y = "Overall sentiment", 
+           legend = none) +
+  theme_minimal()
+#ggsave("overall.png")
+
+egg::ggarrange(election_day_plot, called_day_plot)
+
+```
+
+
+
+(2) {data-color=darkgreen}
+================================================================================
+
+In a sample set of articles published between 2020-10-15 and 2020-11-24, the most used words includes "court", "supreme","lawsuit". 
+```{r wordcloud, message=FALSE, fig.width=6, fig.height=6, dev='svg', out.width='100%', echo = FALSE}
+library(wordcloud)
+
+wordcloud(words = counts$word,
+          freq = counts$n,
+          max.words = 20, 
+          color = "darkgreen")
+```
+
+Data {data-color=darkgreen}
+================================================================================
+
+The whole dataset contains all articles in the politics section produced by the Epoch Times English since March 5, 2021. Below is a sample set of articles published between 2020-10-15 and 2020-11-24.
+
+```{r data hist plot, fig.width=6, fig.height=3, dev='svg', out.width='100%', echo = FALSE}
+# density of article published overtime
+sample_analysis %>% 
+  select(publish_date) %>% 
+  drop_na() %>% 
+  add_count(week = lubridate::floor_date(publish_date, "week")) %>% 
+  ggplot(aes(week)) +
+  geom_density(color = "darkgreen", size = 1) +
+  labs(
+    title = "Weekly Distribution of Articles in the Sample Set", 
+    x = "",
+    y = ""
+  ) +
+  theme_minimal()
+```
+
+
+
+
+
+
+
+Acknowledgements {data-color=darkgreen}
+================================================================================
+
+The dataset was collected in Winter 2021 as a part of the Capstone project, Data Science Specialization, University of Oregon. 
+I am indebted to Dr. Daniel Anderson for his guidance and support. 
+
+
+Contact Information {.block data-color=yellow data-border-color=darkgreen data-background-color=white}
+================================================================================
+
+- Web: https://usvietnam.uoregon.edu/en/
+- Email: thuyn@uoregon.edu
+- Add: 840 PLC, University of Oregon
+- Github: github.com/thuy2020
